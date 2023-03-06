@@ -1,4 +1,9 @@
 .SearchBar{
     padding-top: 10px;
-    
+}
+.InputBar{
+    margin-top: 15px;
+    border: solid 1px #cfcfcf;
+    border-radius: 6px;
+    --font-size: 20px;
 }
