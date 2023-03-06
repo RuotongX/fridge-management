@@ -7,3 +7,12 @@
     border-radius: 6px;
     --font-size: 20px;
 }
+.ExpiredFood{
+    color:blueviolet;
+}
+.ClosedExpireFood{
+    color:red;
+}
+.NormalFood{
+    color:black;
+}
