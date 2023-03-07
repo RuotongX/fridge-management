@@ -9,16 +9,15 @@ export default function FridgePage() {
   var selectDate = "";
   var inputName = "";
   var inputAmount = "";
-  var selectFood = "";
   const right = <AddOutline fontSize={30} onClick={handleAddFoodModal} />;
   const refresh = <RedoOutline fontSize={25} onClick={RefreshFood} />;
   const currentDate = moment().format("YYYY-MM-DD");
   const defaultSingle = new Date(currentDate);
   const [foodData, setFoodData] = useState([
-    { name: "苹果", date: "2023/3/1", amount: 5 },
-    { name: "猪肉", date: "2023/3/9", amount: 7 },
-    { name: "香蕉", date: "2023/2/28", amount: 10 },
-    { name: "猪肉", date: "2023/3/20", amount: 4 },
+    { name: "苹果", date: "2023-3-1", amount: 5 },
+    { name: "猪肉", date: "2023-3-9", amount: 7 },
+    { name: "香蕉", date: "2023-2-28", amount: 10 },
+    { name: "猪肉", date: "2023-3-20", amount: 4 },
   ]);
 
   //   React.useEffect(()=>{
@@ -26,6 +25,9 @@ export default function FridgePage() {
   //   });
 
   function handleAddFoodModal() {
+    selectDate="";
+    inputAmount="";
+    inputName="";
     Modal.show({
       content: (
         <div>
@@ -68,16 +70,20 @@ export default function FridgePage() {
     });
   }
 
-  function handleEditFoodModal() {
+  function handleEditFoodModal(index) {
+    selectDate=foodData[index].date;
+    inputAmount=foodData[index].amount;
+    const tempdate = new Date(selectDate);
+    inputName="";
     Modal.show({
       content: (
         <div>
           <Calendar
             selectionMode="single"
-            defaultValue={defaultSingle}
+            defaultValue={tempdate}
             onChange={(val) => {
               console.log(val);
-              //   setSelectDate(moment(val).format('YYYY-MM-DD'));
+              selectDate = moment(val).format("YYYY-MM-DD");
             }}
           >
             {" "}
@@ -85,10 +91,15 @@ export default function FridgePage() {
           <Input
             placeholder="还剩几个捏？"
             style={{ border: "solid 1px #cfcfcf", borderRadius: "6px" }}
-            // value={value}
-            //   onChange={val => {
-            //     setValue(val)
-            //   }}
+            
+              onChange={val => {
+                if(val === ""){
+                  inputAmount=foodData[index].amount
+                } else{
+                  inputAmount=val;
+                }
+                
+              }}
           />
         </div>
       ),
@@ -98,28 +109,24 @@ export default function FridgePage() {
           key: "decrease",
           text: "吃掉一个",
           primary: true,
-        //   onClick:handleDecreaseOneFood(),
+          onClick:(e)=>handleDecreaseOneFood(index),
         },
         {
           key: "confirm",
           text: "修改日期or数量",
-
-
-          //   onClick: handleEditDate(food,selectDate),
+          onClick:(e)=> handleEditFood(index,selectDate,inputAmount),
         },
         {
           key: "delete",
           text: "删除",
+          onClick:(e)=>handleDeleteFood(index),
         },
       ],
       showCloseButton: true,
     });
   }
 
-  // function handleEditDate(food,date){
-  //     let index = fakedata.findIndex((item)=>item.name === food)
-  //     fakedata[index].date = moment(date).format('YYYY-MM-DD')
-  // }
+  
   function FoodDateSort(date) {
     
     if (
@@ -144,27 +151,29 @@ export default function FridgePage() {
   function SearchFood(name) {
     var newdata = [];
     foodData.forEach((food) => {
-      if (food.name === name) {
+      if (food.name.includes(name)) {
         newdata.push(food);
       }
     });
-    setFoodData(newdata);
+   setFoodData(newdata);
   }
 
   function RefreshFood() {
     const newdata = [
-      { name: "苹果", date: "2023/3/1", amount: 5 },
-      { name: "猪肉", date: "2023/3/9", amount: 7 },
-      { name: "香蕉", date: "2023/2/28", amount: 10 },
-      { name: "猪肉", date: "2023/3/20", amount: 4 },
+      { name: "苹果", date: "2023-3-1", amount: 5 },
+      { name: "猪肉", date: "2023-3-9", amount: 7 },
+      { name: "香蕉", date: "2023-2-28", amount: 10 },
+      { name: "猪肉", date: "2023-3-20", amount: 4 },
     ];
     setFoodData(newdata);
   }
 
   function handleAddFood() {
-    var newdata = cloneDeep(foodData);
-    newdata.push({ name: inputName, date: selectDate, amount: inputAmount });
-    setFoodData(newdata);
+    
+    setFoodData(
+      [...foodData,
+        { name: inputName, date: selectDate, amount: inputAmount }]);
+   
     selectDate = "";
     inputName = "";
     inputAmount = "";
@@ -173,28 +182,30 @@ export default function FridgePage() {
   
   
 
-  //   function handleEditFood(){
+    function handleEditFood(index,selectDate,inputAmount){
+      var newdata = cloneDeep(foodData);
+      newdata[index].date=selectDate;
+      newdata[index].amount=inputAmount;
+      setFoodData(newdata);
 
-  //   }
+    }
 
-//   function handleDeleteFood(){
+    function handleDeleteFood(index){
+      var newdata = cloneDeep(foodData);
+      newdata.splice(index);
+      setFoodData(newdata);
+    }
+    function handleDecreaseOneFood(index){
+        var newdata = cloneDeep(foodData);
+        newdata[index].amount--;
+        if(newdata[index].amount<=0){
+         newdata.splice(index);
+        } 
+        setFoodData(newdata);
+        
+        
+    }
 
-//   }
-    // function handleDecreaseOneFood(){
-    //     var newdata = cloneDeep(foodData);
-    //     const Index = newdata.findIndex((item)=>item.name === selectFood)
-    //     console.log(selectFood);
-    //     newdata[Index].amount--;
-    //     setFoodData(newdata);
-    //     selectFood = "";
-    // }
-
-  //   const fakedata = [
-  //     { name: "苹果", date: "2023/3/1", amout: 5 },
-  //     { name: "猪肉", date: "2023/3/9", amout: 7 },
-  //     { name: "香蕉", date: "2023/2/28", amout: 10 },
-  //     { name: "猪肉", date: "2023/3/20", amout: 4 },
-  //   ];
   return (
     <div>
       <NavBar
@@ -224,8 +235,7 @@ export default function FridgePage() {
                 key={index}
                 description={food.date}
                 extra={food.amount}
-                
-                onClick={handleEditFoodModal}
+                onClick={(e) => handleEditFoodModal(index)}
                 className={FoodDateSort(food.date)}
               >
                 {food.name}
