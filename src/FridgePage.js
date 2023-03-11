@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState,useEffect } from "react";
 import { NavBar, SearchBar, List, Modal, Calendar, Input } from "antd-mobile";
 import { AddOutline, RedoOutline } from "antd-mobile-icons";
 import moment from "moment";
@@ -6,6 +6,7 @@ import cloneDeep from "lodash/cloneDeep";
 import "./FridgePage.css";
 
 export default function FridgePage() {
+
   var selectDate = "";
   var inputName = "";
   var inputAmount = "";
@@ -13,16 +14,41 @@ export default function FridgePage() {
   const refresh = <RedoOutline fontSize={25} onClick={RefreshFood} />;
   const currentDate = moment().format("YYYY-MM-DD");
   const defaultSingle = new Date(currentDate);
-  const [foodData, setFoodData] = useState([
-    { name: "苹果", date: "2023-3-1", amount: 5 },
-    { name: "猪肉", date: "2023-3-9", amount: 7 },
-    { name: "香蕉", date: "2023-2-28", amount: 10 },
-    { name: "猪肉", date: "2023-3-20", amount: 4 },
-  ]);
+  const [foodData, setFoodData] = useState([]);
+  // let realm;
 
-  //   React.useEffect(()=>{
+  // [
+  //   { name: "苹果", date: "2023-3-1", amount: 5 },
+  //   { name: "猪肉", date: "2023-3-9", amount: 7 },
+  //   { name: "香蕉", date: "2023-2-28", amount: 10 },
+  //   { name: "猪肉", date: "2023-3-20", amount: 4 },
+  // ]
 
-  //   });
+    React.useEffect(()=>{
+      // setupRealm();
+      // const foods = realm.objects("Food");
+      // let tempdata = [];
+      // foods.map((food)=> {tempdata.push({name:food.name,date:food.date,amount:food.amount})});
+      // setFoodData(tempdata);
+    },[]);
+  // const FoodSchema = {
+  //   name: "Food",
+  //   properties: {
+  //     _id: "Realm.BSON.ObjectId",
+  //     name: "string",
+  //     date: "string",
+  //     amount: "int",
+  //   },
+  //   primaryKey: "_id",
+  // };
+
+//   const setupRealm = async() =>{ 
+//     realm = await Realm.open({
+//     path: "realm-files/myrealm",
+//     schema: [FoodSchema],
+//   })
+// };
+
 
   function handleAddFoodModal() {
     selectDate="";
@@ -159,13 +185,13 @@ export default function FridgePage() {
   }
 
   function RefreshFood() {
-    const newdata = [
-      { name: "苹果", date: "2023-3-1", amount: 5 },
-      { name: "猪肉", date: "2023-3-9", amount: 7 },
-      { name: "香蕉", date: "2023-2-28", amount: 10 },
-      { name: "猪肉", date: "2023-3-20", amount: 4 },
-    ];
-    setFoodData(newdata);
+    // const newdata = [
+    //   { name: "苹果", date: "2023-3-1", amount: 5 },
+    //   { name: "猪肉", date: "2023-3-9", amount: 7 },
+    //   { name: "香蕉", date: "2023-2-28", amount: 10 },
+    //   { name: "猪肉", date: "2023-3-20", amount: 4 },
+    // ];
+    // setFoodData(newdata);
   }
 
   function handleAddFood() {
@@ -173,6 +199,15 @@ export default function FridgePage() {
     setFoodData(
       [...foodData,
         { name: inputName, date: selectDate, amount: inputAmount }]);
+    // let food;
+    // realm.write(() => {
+    //   food = realm.create("Food",{
+    //     _id: new Realm.BSON.ObjectId(),
+    //     name: inputName,
+    //     date: selectDate,
+    //     amount: inputAmount,
+    //   })
+    // })
    
     selectDate = "";
     inputName = "";
