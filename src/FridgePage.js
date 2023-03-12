@@ -1,12 +1,22 @@
-import React, { useState,useEffect } from "react";
+import React, { useState } from "react";
 import { NavBar, SearchBar, List, Modal, Calendar, Input } from "antd-mobile";
 import { AddOutline, RedoOutline } from "antd-mobile-icons";
 import moment from "moment";
 import cloneDeep from "lodash/cloneDeep";
 import "./FridgePage.css";
+import { initializeApp } from "firebase/app";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  doc,
+  getDocs,
+  deleteDoc,
+  updateDoc,
+} from "firebase/firestore";
 
 export default function FridgePage() {
-
   var selectDate = "";
   var inputName = "";
   var inputAmount = "";
@@ -15,45 +25,38 @@ export default function FridgePage() {
   const currentDate = moment().format("YYYY-MM-DD");
   const defaultSingle = new Date(currentDate);
   const [foodData, setFoodData] = useState([]);
-  // let realm;
+  const firebaseConfig = {
+    config
+  };
 
-  // [
-  //   { name: "苹果", date: "2023-3-1", amount: 5 },
-  //   { name: "猪肉", date: "2023-3-9", amount: 7 },
-  //   { name: "香蕉", date: "2023-2-28", amount: 10 },
-  //   { name: "猪肉", date: "2023-3-20", amount: 4 },
-  // ]
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    React.useEffect(()=>{
-      // setupRealm();
-      // const foods = realm.objects("Food");
-      // let tempdata = [];
-      // foods.map((food)=> {tempdata.push({name:food.name,date:food.date,amount:food.amount})});
-      // setFoodData(tempdata);
-    },[]);
-  // const FoodSchema = {
-  //   name: "Food",
-  //   properties: {
-  //     _id: "Realm.BSON.ObjectId",
-  //     name: "string",
-  //     date: "string",
-  //     amount: "int",
-  //   },
-  //   primaryKey: "_id",
-  // };
+  const dbRef = collection(db, "13joystreet");
 
-//   const setupRealm = async() =>{ 
-//     realm = await Realm.open({
-//     path: "realm-files/myrealm",
-//     schema: [FoodSchema],
-//   })
-// };
+  const getFoods = async () => {
+    const colRef = collection(db, "13joystreet");
+    const docsSnap = await getDocs(colRef);
+    let tempdata = [];
+    docsSnap.forEach((doc) => {
+      tempdata.push({
+        id: doc.id,
+        name: doc.data().name,
+        date: doc.data().date,
+        amount: doc.data().amount,
+      });
+    });
+    setFoodData(tempdata);
+  };
 
+  React.useEffect(() => {
+    getFoods();
+  }, []);
 
   function handleAddFoodModal() {
-    selectDate="";
-    inputAmount="";
-    inputName="";
+    selectDate = "";
+    inputAmount = "";
+    inputName = "";
     Modal.show({
       content: (
         <div>
@@ -96,11 +99,11 @@ export default function FridgePage() {
     });
   }
 
-  function handleEditFoodModal(index) {
-    selectDate=foodData[index].date;
-    inputAmount=foodData[index].amount;
+  function handleEditFoodModal(index, id) {
+    selectDate = foodData[index].date;
+    inputAmount = foodData[index].amount;
     const tempdate = new Date(selectDate);
-    inputName="";
+    inputName = "";
     Modal.show({
       content: (
         <div>
@@ -117,15 +120,13 @@ export default function FridgePage() {
           <Input
             placeholder="还剩几个捏？"
             style={{ border: "solid 1px #cfcfcf", borderRadius: "6px" }}
-            
-              onChange={val => {
-                if(val === ""){
-                  inputAmount=foodData[index].amount
-                } else{
-                  inputAmount=val;
-                }
-                
-              }}
+            onChange={(val) => {
+              if (val === "") {
+                inputAmount = foodData[index].amount;
+              } else {
+                inputAmount = val;
+              }
+            }}
           />
         </div>
       ),
@@ -135,26 +136,24 @@ export default function FridgePage() {
           key: "decrease",
           text: "吃掉一个",
           primary: true,
-          onClick:(e)=>handleDecreaseOneFood(index),
+          onClick: (e) => handleDecreaseOneFood(index, id),
         },
         {
           key: "confirm",
           text: "修改日期or数量",
-          onClick:(e)=> handleEditFood(index,selectDate,inputAmount),
+          onClick: (e) => handleEditFood(index, selectDate, inputAmount, id),
         },
         {
           key: "delete",
           text: "删除",
-          onClick:(e)=>handleDeleteFood(index),
+          onClick: (e) => handleDeleteFood(index, id),
         },
       ],
       showCloseButton: true,
     });
   }
 
-  
   function FoodDateSort(date) {
-    
     if (
       moment(date).format("YYYYMMDD") - moment(currentDate).format("YYYYMMDD") <
       0
@@ -181,65 +180,98 @@ export default function FridgePage() {
         newdata.push(food);
       }
     });
-   setFoodData(newdata);
+    setFoodData(newdata);
   }
 
   function RefreshFood() {
-    // const newdata = [
-    //   { name: "苹果", date: "2023-3-1", amount: 5 },
-    //   { name: "猪肉", date: "2023-3-9", amount: 7 },
-    //   { name: "香蕉", date: "2023-2-28", amount: 10 },
-    //   { name: "猪肉", date: "2023-3-20", amount: 4 },
-    // ];
-    // setFoodData(newdata);
+    getFoods();
   }
 
-  function handleAddFood() {
-    
-    setFoodData(
-      [...foodData,
-        { name: inputName, date: selectDate, amount: inputAmount }]);
-    // let food;
-    // realm.write(() => {
-    //   food = realm.create("Food",{
-    //     _id: new Realm.BSON.ObjectId(),
-    //     name: inputName,
-    //     date: selectDate,
-    //     amount: inputAmount,
-    //   })
-    // })
-   
-    selectDate = "";
-    inputName = "";
-    inputAmount = "";
+  const handleAddFood = async () => {
+    addDoc(dbRef, {
+      name: inputName,
+      date: selectDate,
+      amount: inputAmount,
+    }).then((docRef) => {
+      console.log("I am here");
+      setFoodData([
+        ...foodData,
+        {
+          name: inputName,
+          date: selectDate,
+          amount: inputAmount,
+          id: dbRef.id,
+        },
+      ]);
+    });
+  };
+
+  function handleEditFood(index, selectDate, inputAmount, id) {
+    var newdata = cloneDeep(foodData);
+    newdata[index].date = selectDate;
+    newdata[index].amount = inputAmount;
+    const docRef = doc(db, "13joystreet", id);
+    const updateData = {
+      name: newdata[index].name,
+      date: newdata[index].date,
+      amount: newdata[index].amount,
+    };
+    updateDoc(docRef, updateData)
+      .then((docRef) => {
+        console.log(
+          "A New Document Field has been added to an existing document"
+        );
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    setFoodData(newdata);
   }
 
-  
-  
-
-    function handleEditFood(index,selectDate,inputAmount){
-      var newdata = cloneDeep(foodData);
-      newdata[index].date=selectDate;
-      newdata[index].amount=inputAmount;
-      setFoodData(newdata);
-
+  function handleDeleteFood(index, id) {
+    const docRef = doc(db, "13joystreet", id);
+    deleteDoc(docRef)
+      .then(() => {
+        console.log("Entire Document has been deleted successfully.");
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    var newdata = cloneDeep(foodData);
+    newdata.splice(index, 1);
+    setFoodData(newdata);
+  }
+  function handleDecreaseOneFood(index, id) {
+    var newdata = cloneDeep(foodData);
+    newdata[index].amount--;
+    if (newdata[index].amount <= 0) {
+      newdata.splice(index, 1);
+      const docRef = doc(db, "13joystreet", id);
+      deleteDoc(docRef)
+        .then(() => {
+          console.log("Entire Document has been deleted successfully.");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     }
-
-    function handleDeleteFood(index){
-      var newdata = cloneDeep(foodData);
-      newdata.splice(index);
-      setFoodData(newdata);
-    }
-    function handleDecreaseOneFood(index){
-        var newdata = cloneDeep(foodData);
-        newdata[index].amount--;
-        if(newdata[index].amount<=0){
-         newdata.splice(index);
-        } 
-        setFoodData(newdata);
-        
-        
-    }
+    const docRef = doc(db, "13joystreet", id);
+    const updateData = {
+      name: newdata[index].name,
+      date: newdata[index].date,
+      amount: newdata[index].amount,
+    };
+    updateDoc(docRef, updateData)
+      .then((docRef) => {
+        console.log(
+          "A New Document Field has been added to an existing document"
+        );
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+    setFoodData(newdata);
+  }
 
   return (
     <div>
@@ -270,7 +302,7 @@ export default function FridgePage() {
                 key={index}
                 description={food.date}
                 extra={food.amount}
-                onClick={(e) => handleEditFoodModal(index)}
+                onClick={(e) => handleEditFoodModal(index, food.id)}
                 className={FoodDateSort(food.date)}
               >
                 {food.name}
